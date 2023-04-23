@@ -76,9 +76,9 @@ def register(request):
 
 def invited_register(request, premium_invite_uid):
 
-    invited_profile = Profile.objects.get(premium_invite_uid = premium_invite_uid)
+    inviting_profile = Profile.objects.get(premium_invite_uid = premium_invite_uid)
 
-    if invited_profile.invited_friends.all().count() == 2 or not invited_profile.premium:
+    if inviting_profile.invited_friends.all().count() == 2 or not inviting_profile.premium:
 
         return redirect('/register/')
 
@@ -100,19 +100,9 @@ def invited_register(request, premium_invite_uid):
             user.profile.premium = True
             user.profile.premium_since = dt.now()
 
-            user.profile.invited_by = invited_profile
-            invited_profile.invited_friends.add(user.profile)
-
-            uid = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(7))
-
-            while True:
-                if Profile.objects.get(premium_invite_uid = uid).exists():
-                    uid = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(7))
-                else:
-                    break
-
-            user.profile.premium_invite_uid = uid
+            user.profile.invited_by = inviting_profile
             user.profile.save()
+            inviting_profile.invited_friends.add(user.profile)
 
             user = authenticate(username = username, password = password)
             login(request, user)
